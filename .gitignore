@@ -1,3 +1,6 @@
 # Rstudio Files
 *.Rproj
 .Rproj*
+# Python Venv and Cache
+env
+__pycache__
