@@ -9,8 +9,8 @@ LABEL maintainer='Branson Fox <bransonfox@umsl.edu>'
 ## For Connecting to DB
 ENV DB_HOST='localhost'
 ENV DB_PORT=5432
-ENV USER='postgres'
-ENV PASS='postgres'
+ENV DB_USER='postgres'
+ENV DB_PASS='postgres'
 ENV DB_NAME='crime'
 
 ## Optionally, Connect to Pushover
