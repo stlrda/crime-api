@@ -123,7 +123,9 @@ async def legacy_trends(start: str, end: str, ucr: str, gun: Optional[bool] = Fa
     end = datetime.strptime(end, '%Y-%m-%d').date()
     # parse ucr as json
     categories = json.loads(ucr)
-    query = "SELECT date, category, SUM(CASE WHEN count THEN 1 END) FROM crime WHERE date >= :start AND date <= :end AND category = ANY(:categories) GROUP BY date, category;" 
+    if categories == {}:
+        categories = []
+    query = "SELECT date as date_occur, category, SUM(CASE WHEN count THEN 1 END) FROM crime WHERE date >= :start AND date <= :end AND category = ANY(:categories) GROUP BY date, category;" 
     values = {"start" : start, "end" : end, "categories": categories}
     return await database.fetch_all(query=query, values=values)
 
