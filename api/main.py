@@ -1,57 +1,131 @@
-# API for Serving Crime Data
-# All READ-ONLY Functions
-# Use `uvicorn main:app` to run
-
+# API for St Louis Crime DB
+#
+import os
+import databases
+import sqlalchemy
+import json
+from datetime import datetime, timedelta
 from fastapi import FastAPI
+from typing import List, Optional
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.openapi.utils import get_openapi
 from starlette.responses import RedirectResponse
 
-from fastapi.openapi.utils import get_openapi
+from models import *
 
-# Need to Import Asynchronous Postgres Module...
-# Need to Configure OpenAPI/Swagger Spec...
+## Load Database Configuration
+# DB_HOST = os.environ['DB_HOST']
+# DB_PORT = os.environ['DB_PORT']
+# DB_NAME = os.environ['DB_NAME']
+# DB_USER = os.environ['DB_USER']
+# DB_PASS = os.environ['DB_PASS']
+# DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL ='postgresql://postgres:postgres@localhost:5432/crime' # FOR TESTING
+database = databases.Database(DATABASE_URL)
 
-# Load Database Configuration
-
+engine = sqlalchemy.create_engine(
+    DATABASE_URL, connect_args={"check_same_thread": False}
+)
 
 # Allow All CORS
-app = FastAPI()
+app = FastAPI(title='STL Crime API')
 app.add_middleware(CORSMiddleware, allow_origins=['*'])
+
+## Connect to DB on Startup ##
+@app.on_event('startup')
+async def startup():
+    await database.connect()
+@app.on_event('shutdown')
+async def shutdown():
+    await database.disconnect()
+
 
 ## Legacy Endpoints ##
 # Necessary Until the Deprecation of Current Dashboard
-@app.get('/legacy/coords')
-async def legacy_coords(year: int, month: str, gun: bool, ucr: list):
-    return None
-
 @app.get('/legacy/latest')
 async def legacy_latest():
-    return None
+    # Waiting on Scraping
+    # Returns as ["June 2020"]
+    return ["June 2020"]
 
-@app.get('/legacy/crime')
-async def legacy_crime(dbid: int):
-    return None
+@app.get('/legacy/nbhood', response_model=List[LegacyCrimeNeighborhood])
+async def legacy_nbhood(year: int, month: str, gun: Optional[bool] = False):
+    month = {
+        'January': 1,
+        'February': 2,
+        'March': 3,
+        'April': 4,
+        'May': 5,
+        'June': 6,
+        'July': 7,
+        'August': 8,
+        'September': 9,
+        'October': 10,
+        'November': 11,
+        'December': 12
+    }[month]
+    start = datetime(year, month, 1)
+    if month == 12:
+        year += 1
+        month = 1
+    else:
+        month += 1
+    end = datetime(year, month, 1)
+    query = "SELECT neighborhood::INTEGER, category as ucr_category, SUM(CASE WHEN count THEN 1 END) as \"Incidents\" FROM crime WHERE date >= :start AND date < :end GROUP BY neighborhood, category;"
+    values = {"start" : start, "end" : end}
+    return await database.fetch_all(query=query, values=values)
 
-@app.get('/legacy/nbhood')
-async def legacy_nbhood(year: int, month: str, gun: bool):
-    return None
+@app.get('/legacy/district', response_model=List[LegacyCrimeDistrict])
+async def legacy_district(year: int, month: str, gun: Optional[bool] = False):
+    month = {
+        'January': 1,
+        'February': 2,
+        'March': 3,
+        'April': 4,
+        'May': 5,
+        'June': 6,
+        'July': 7,
+        'August': 8,
+        'September': 9,
+        'October': 10,
+        'November': 11,
+        'December': 12
+    }[month]
+    start = datetime(year, month, 1)
+    if month == 12:
+        year += 1
+        month = 1
+    else:
+        month += 1
+    end = datetime(year, month, 1)
+    query = "SELECT district::INTEGER, category as ucr_category, SUM(CASE WHEN count THEN 1 END) as \"Incidents\" FROM crime WHERE date >= :start AND date < :end GROUP BY district, category;"
+    values = {"start" : start, "end" : end}
+    return await database.fetch_all(query=query, values=values)
 
-@app.get('/legacy/district')
-async def legacy_district(year: int, month: str, gun: bool):
-    return None
-
-@app.get('/legacy/catsum')
-async def legacy_catsum(categories: list):
-    return None
-
-@app.get('/legacy/range')
-async def legacy_range(start: str, end: str, gun: bool, ucr: list):
-    return None
+@app.get('/legacy/range', response_model=List[LegacyCrimeRange])
+async def legacy_range(start: str, end: str, ucr: str, gun: Optional[bool] = False):
+    if end == 'NA':
+        end = start
+    start = datetime.strptime(start, '%Y-%m-%d')
+    end = datetime.strptime(end, '%Y-%m-%d')
+    # parse ucr as json
+    categories = json.loads(ucr)
+    # in query, need an in statment
+    query = "SELECT id as db_id, category as ucr_category, lon as wgs_x, lat as wgs_y FROM crime WHERE date >= :start AND date <= :end AND category = ANY(:categories);"
+    values = {"start": start, "end": end, "categories": categories}
+    return await database.fetch_all(query=query, values=values)
 
 @app.get('/legacy/trends')
-async def legacy_trends(start: str, end: str, gun: bool, ucr: list):
-    return None
+async def legacy_trends(start: str, end: str, ucr: str, gun: Optional[bool] = False):
+    # Different schema from original, handled shiny server side instead of API
+    start = datetime.strptime(start, '%Y-%m-%d').date()
+    end = datetime.strptime(end, '%Y-%m-%d').date()
+    # parse ucr as json
+    categories = json.loads(ucr)
+    query = "SELECT date, category, SUM(CASE WHEN count THEN 1 END) FROM crime WHERE date >= :start AND date <= :end AND category = ANY(:categories) GROUP BY date, category;" 
+    values = {"start" : start, "end" : end, "categories": categories}
+    return await database.fetch_all(query=query, values=values)
 
 ## Version 2.0 Endpoints ##
 
@@ -95,7 +169,7 @@ def api_docs(openapi_prefix: str):
         title='St. Louis Crime',
         version='0.1.0',
         description='Automatically Updated, Clean Crime Data from the Saint Louis Metropolitan Police Department, provided by the St. Louis Regional Data Alliance in partnership with the Insititute for Public Health at Washington University.<br><br>If you\'d prefer to interact with queries in browser, see the <a href=\'/docs\'>Swagger UI</a>',
-        routes=app.routes[13:], # Need to Verify this to Obfuscate Some Routes from Docs
+        routes=app.routes,#[13:], # Need to Verify this to Obfuscate Some Routes from Docs
         openapi_prefix=openapi_prefix
     )
     openapi_schema['info']['x-logo'] = {
@@ -107,17 +181,4 @@ def api_docs(openapi_prefix: str):
 app.openapi = api_docs
 
 
-
-
-
-
-##TODO Implement Map Saving via Permalinks in DB
-
-# # Save a Specific Map to a Permalink
-# @app.post('/save')
-# async def permalink():
-#     # Get the body with layers.json
-#     # Calculate a hash for this (MD5? Fast)
-#     # Store in a Database field
-#     # Return the hash value to the client
-#     return None
+# uvicorn main:app to run
