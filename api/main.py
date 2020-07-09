@@ -15,13 +15,12 @@ from starlette.responses import RedirectResponse
 from models import *
 
 ## Load Database Configuration
-# DB_HOST = os.environ['DB_HOST']
-# DB_PORT = os.environ['DB_PORT']
-# DB_NAME = os.environ['DB_NAME']
-# DB_USER = os.environ['DB_USER']
-# DB_PASS = os.environ['DB_PASS']
-# DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-DATABASE_URL ='postgresql://postgres:postgres@localhost:5432/crime' # FOR TESTING
+DB_HOST = os.environ['DB_HOST']
+DB_PORT = os.environ['DB_PORT']
+DB_NAME = os.environ['DB_NAME']
+DB_USER = os.environ['DB_USER']
+DB_PASS = os.environ['DB_PASS']
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 database = databases.Database(DATABASE_URL)
 
 engine = sqlalchemy.create_engine(
@@ -45,9 +44,8 @@ async def shutdown():
 # Necessary Until the Deprecation of Current Dashboard
 @app.get('/legacy/latest')
 async def legacy_latest():
-    # Waiting on Scraping
-    # Returns as ["June 2020"]
-    return ["June 2020"]
+    query = "SELECT crime_last_update FROM update"
+    return await database.fetch_one(query=query)
 
 @app.get('/legacy/nbhood', response_model=List[LegacyCrimeNeighborhood])
 async def legacy_nbhood(year: int, month: str, gun: Optional[bool] = False):
@@ -140,7 +138,9 @@ async def get_api_docs():
 # Get Latest Date
 @app.get('/latest')
 async def latest_data():
-    print(list(app.routes))
+    query = "SELECT crime_last_update FROM update"
+    # LAST DoM -- SELECT (date_trunc('month', '<date>'::date) + interval '1 month' - interval '1 day')::date
+    return await database.fetch_one(query=query)
     return 'Latest Date'
 
 # Get Point Level Coordinates

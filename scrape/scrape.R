@@ -1,5 +1,7 @@
 # Extract SLMPD Monthly Crime Releases
 #
+# NOTE: Potentially unhandled error. If latest table on SLMPD website is dead. May notify pushover for a long period.
+#
 # Dependencies:
 library(compstatr)
 library(DBI)
@@ -110,7 +112,8 @@ cs_clean <- function(crime_data){
       lon = as.numeric(wgs_x),
       lat = as.numeric(wgs_y)
     )
-  
+  # Notes on New Schema - Gun Classification has Been Dropped
+  # May need to revise definition/type of count
   return(schema)
 }
 
