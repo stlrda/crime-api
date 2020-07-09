@@ -138,9 +138,8 @@ async def get_api_docs():
 # Get Latest Date
 @app.get('/latest')
 async def latest_data():
-    query = "SELECT (date_trunc('month', crime_last_update::date) + interval '1 month' - interval '1 day')::date AS latest FROM update;
+    query = "SELECT (date_trunc('month', crime_last_update::date) + interval '1 month' - interval '1 day')::date AS latest FROM update;"
     return await database.fetch_one(query=query)
-    return 'Latest Date'
 
 # Get Point Level Coordinates
 @app.get('/crime')
