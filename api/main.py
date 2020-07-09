@@ -181,6 +181,3 @@ def api_docs(openapi_prefix: str):
     return app.openapi_schema
 
 app.openapi = api_docs
-
-
-# uvicorn main:app to run
