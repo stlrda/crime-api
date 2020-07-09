@@ -1,0 +1,27 @@
+name: Build Docker Images to Github Packages
+on: [push]
+jobs:
+  build-scraper:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Publish Scraper to Github Packages
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: stlrda/crime-api/scraper
+        username: ${{ github.actor }}
+        password: ${{ secrets.TOKEN }}
+        registry: docker.pkg.github.com
+        workdir: scrape
+  build-api: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Publish API to Github Packages
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: stlrda/crime-api/api
+        username: ${{ github.actor }}
+        password: ${{ secrets.TOKEN }}
+        registry: docker.pkg.github.com
+        workdir: api
