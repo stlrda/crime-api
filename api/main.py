@@ -48,7 +48,7 @@ async def legacy_latest():
     return await database.fetch_one(query=query)
 
 @app.get('/legacy/nbhood', response_model=List[LegacyCrimeNeighborhood])
-async def legacy_nbhood(year: int, month: str, gun: Optional[bool] = False):
+async def legacy_nbhood(year: int, month: str, gun: Optional[str] = False):
     month = {
         'January': 1,
         'February': 2,
@@ -75,7 +75,7 @@ async def legacy_nbhood(year: int, month: str, gun: Optional[bool] = False):
     return await database.fetch_all(query=query, values=values)
 
 @app.get('/legacy/district', response_model=List[LegacyCrimeDistrict])
-async def legacy_district(year: int, month: str, gun: Optional[bool] = False):
+async def legacy_district(year: int, month: str, gun: Optional[str] = False):
     month = {
         'January': 1,
         'February': 2,
@@ -102,7 +102,7 @@ async def legacy_district(year: int, month: str, gun: Optional[bool] = False):
     return await database.fetch_all(query=query, values=values)
 
 @app.get('/legacy/range', response_model=List[LegacyCrimeRange])
-async def legacy_range(start: str, end: str, ucr: str, gun: Optional[bool] = False):
+async def legacy_range(start: str, end: str, ucr: str, gun: Optional[str] = False):
     if end == 'NA':
         end = start
     start = datetime.strptime(start, '%Y-%m-%d')
@@ -115,7 +115,7 @@ async def legacy_range(start: str, end: str, ucr: str, gun: Optional[bool] = Fal
     return await database.fetch_all(query=query, values=values)
 
 @app.get('/legacy/trends')
-async def legacy_trends(start: str, end: str, ucr: str, gun: Optional[bool] = False):
+async def legacy_trends(start: str, end: str, ucr: str, gun: Optional[str] = False):
     # Different schema from original, handled shiny server side instead of API
     start = datetime.strptime(start, '%Y-%m-%d').date()
     end = datetime.strptime(end, '%Y-%m-%d').date()
