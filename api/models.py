@@ -1,6 +1,7 @@
 # Models for Table and Queries
 
 import sqlalchemy
+import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
@@ -27,6 +28,9 @@ crime = sqlalchemy.Table(
 )
 
 # Define Crime ORM Models
+class LegacyCrimeLatest(BaseModel):
+    crime_last_update: datetime.date
+
 class LegacyCrimeNeighborhood(BaseModel):
     neighborhood: str
     ucr_category: str
@@ -42,3 +46,23 @@ class LegacyCrimeRange(BaseModel):
     ucr_category: str
     wgs_x: Optional[float]
     wgs_y: Optional[float]
+
+class CrimeLatest(BaseModel):
+    latest: datetime.date
+
+class CrimePoints(BaseModel):
+    id: int
+    lon: Optional[float]
+    lat: Optional[float]
+
+class CrimeDetailed(BaseModel):
+    id: int
+    date: datetime.date
+    time: datetime.time
+    description: Optional[str]
+    lon: Optional[float]
+    lat: Optional[float]
+
+class CrimeAggregate(BaseModel):
+    region: int
+    count: int

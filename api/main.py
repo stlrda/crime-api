@@ -4,8 +4,8 @@ import os
 import databases
 import sqlalchemy
 import json
-from datetime import datetime, timedelta
-from fastapi import FastAPI
+from datetime import datetime, timedelta, date
+from fastapi import FastAPI, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,7 +42,7 @@ async def shutdown():
 
 ## Legacy Endpoints ##
 # Necessary Until the Deprecation of Current Dashboard
-@app.get('/legacy/latest')
+@app.get('/legacy/latest', response_model=LegacyCrimeLatest)
 async def legacy_latest():
     query = "SELECT crime_last_update FROM update"
     return await database.fetch_one(query=query)
@@ -136,30 +136,54 @@ async def get_api_docs():
     return response
 
 # Get Latest Date
-@app.get('/latest')
+@app.get('/latest', response_model=CrimeLatest)
 async def latest_data():
     query = "SELECT (date_trunc('month', crime_last_update::date) + interval '1 month' - interval '1 day')::date AS latest FROM update;"
     return await database.fetch_one(query=query)
 
 # Get Point Level Coordinates
-@app.get('/crime')
-async def crime_points(start: str, end: str, category: list, simple: bool):
-    # Simple Designates should we return all field or just points
-    return None
+@app.get('/crime/', response_model=List[CrimePoints])
+async def crime_points(start: date, end: date, category: str):
+    query = "SELECT id, lon, lat FROM crime WHERE count = true AND date >= :start AND date <= :end AND LOWER(category) = LOWER(:category);"
+    values = {'start': start, 'end': end, 'category': category}
+    return await database.fetch_all(query=query, values=values)
+
+@app.get('/crime/detailed', response_model=List[CrimeDetailed])
+async def crime_detailed(start: date, end: date, category: str):
+    query = "SELECT id, date, time, description, lon, lat FROM crime WHERE count = true AND date >= :start AND date <= :end AND LOWER(category) = LOWER(:category);"
+    values = {'start': start, 'end': end, 'category': category}
+    return await database.fetch_all(query=query, values=values)
 
 # Get Geometric Aggregations
-@app.get('crime/{geometry}')
-async def crime_aggregate(start: str, end: str, geometry: str, category: list):
-    return None
+@app.get('/crime/{geometry}', response_model=List[CrimeAggregate])
+async def crime_aggregate(start: date, end: date, geometry: str, category: str):
+    geometry = geometry.lower()
+    category = category.lower()
+    if geometry == 'neighborhood':
+        query = "SELECT neighborhood AS region, SUM(CASE WHEN count THEN 1 END) as count FROM crime WHERE date >= :start AND date <= :end AND LOWER(category) = :category GROUP BY neighborhood;"
+    elif geometry == 'district':
+        query = "SELECT district AS region, SUM(CASE WHEN count THEN 1 END) as count FROM crime WHERE date >= :start AND date <= :end AND LOWER(category) = :category GROUP BY district;"
+    else:
+        raise HTTPException(status_code=400, detail='Unsupported Geometry. Try one of "neighborhood" or "district"')
+    values = {'start': start, 'end': end, 'category': category}
+    # Need to find and implement geometries, geojson, type checking model and feature collection response
+    # Can also consolidate query here
+    return await database.fetch_all(query=query, values=values)
 
 # Get Temporal Aggregations
-@app.get('crime/trends')
-async def crime_trends(start: str, end: str, interval: str, category: list, correct: bool, total: bool):
-    # Interval should be one of days, weeks, months, years
-    # Correct Specifies whether to apply seasonal correction
-    # Total Specifies whether to just get a total count (i.e. total of all categories in a single month)
-    return None
+# @app.get('crime/trends')
+# async def crime_trends(start: str, end: str, interval: str, category: list, correct: bool, total: bool):
+#     # Interval should be one of days, weeks, months, years
+#     # Correct Specifies whether to apply seasonal correction
+#     # Total Specifies whether to just get a total count (i.e. total of all categories in a single month)
+#     # Need to Figure out Postgres for Time Series
+#     return None
 
+# Download Entire Research Files
+# @app.get('crime/download')
+# async def crime_download(start: date, end: date, category: Optional[str] = 'all'):
+#     # Can we automatically export this as a CSV? Figure out pydantic models
+#     return None
 
 ## Modify API Docs ##
 def api_docs(openapi_prefix: str):
