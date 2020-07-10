@@ -10,6 +10,7 @@ Legacy Endpoints will be deprecated in a future release; Currently used to power
 
 ## Valid Crime Categories
 For the current endpoints, these categories (case-insensitive) are supported for queries requesting `category`:
+```
  Fraud
  Simple Assault
  Loitering/Begging
@@ -33,3 +34,4 @@ For the current endpoints, these categories (case-insensitive) are supported for
  Destruction of Property
  Liquor Laws
  Homicide
+```
