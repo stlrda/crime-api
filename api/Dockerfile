@@ -24,7 +24,7 @@ RUN pip install -r requirements.txt
 COPY main.py /api/main.py
 COPY models.py /api/models.py
 
-EXPOSE 80
+EXPOSE 3000
 
 # Start Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3000"]
