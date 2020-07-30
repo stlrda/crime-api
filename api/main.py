@@ -28,7 +28,7 @@ engine = sqlalchemy.create_engine(
 )
 
 # Allow All CORS
-app = FastAPI(title='STL Crime API', docs_url="/crime/docs", redoc_url="/crime/redoc")
+app = FastAPI(title='STL Crime API', docs_url="/crime/docs", redoc_url="/crime/redoc", openapi_url="/crime/openapi.json")
 app.add_middleware(CORSMiddleware, allow_origins=['*'])
 
 ## Connect to DB on Startup ##
