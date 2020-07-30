@@ -28,7 +28,7 @@ engine = sqlalchemy.create_engine(
 )
 
 # Allow All CORS
-app = FastAPI(title='STL Crime API')
+app = FastAPI(title='STL Crime API', docs_url="/crime/docs", redoc_url="/crime/redoc")
 app.add_middleware(CORSMiddleware, allow_origins=['*'])
 
 ## Connect to DB on Startup ##
@@ -42,12 +42,12 @@ async def shutdown():
 
 ## Legacy Endpoints ##
 # Necessary Until the Deprecation of Current Dashboard
-@app.get('/legacy/latest', response_model=LegacyCrimeLatest)
+@app.get('/crime/legacy/latest', response_model=LegacyCrimeLatest)
 async def legacy_latest():
     query = "SELECT crime_last_update FROM update"
     return await database.fetch_one(query=query)
 
-@app.get('/legacy/nbhood', response_model=List[LegacyCrimeNeighborhood])
+@app.get('/crime/legacy/nbhood', response_model=List[LegacyCrimeNeighborhood])
 async def legacy_nbhood(year: int, month: str, gun: Optional[str] = False):
     month = {
         'January': 1,
@@ -74,7 +74,7 @@ async def legacy_nbhood(year: int, month: str, gun: Optional[str] = False):
     values = {"start" : start, "end" : end}
     return await database.fetch_all(query=query, values=values)
 
-@app.get('/legacy/district', response_model=List[LegacyCrimeDistrict])
+@app.get('/crime/legacy/district', response_model=List[LegacyCrimeDistrict])
 async def legacy_district(year: int, month: str, gun: Optional[str] = False):
     month = {
         'January': 1,
@@ -101,7 +101,7 @@ async def legacy_district(year: int, month: str, gun: Optional[str] = False):
     values = {"start" : start, "end" : end}
     return await database.fetch_all(query=query, values=values)
 
-@app.get('/legacy/range', response_model=List[LegacyCrimeRange])
+@app.get('/crime/legacy/range', response_model=List[LegacyCrimeRange])
 async def legacy_range(start: str, end: str, ucr: str, gun: Optional[str] = False):
     if end == 'NA':
         end = start
@@ -114,7 +114,7 @@ async def legacy_range(start: str, end: str, ucr: str, gun: Optional[str] = Fals
     values = {"start": start, "end": end, "categories": categories}
     return await database.fetch_all(query=query, values=values)
 
-@app.get('/legacy/trends')
+@app.get('/crime/legacy/trends')
 async def legacy_trends(start: str, end: str, ucr: str, gun: Optional[str] = False):
     # Different schema from original, handled shiny server side instead of API
     start = datetime.strptime(start, '%Y-%m-%d').date()
@@ -130,19 +130,19 @@ async def legacy_trends(start: str, end: str, ucr: str, gun: Optional[str] = Fal
 ## Version 2.0 Endpoints ##
 
 # Redirect Root to Docs
-@app.get('/')
+@app.get('/crime/')
 async def get_api_docs():
-    response = RedirectResponse(url='/redoc')
+    response = RedirectResponse(url='/crime/redoc')
     return response
 
 # Get Latest Date
-@app.get('/latest', response_model=CrimeLatest)
+@app.get('/crime/latest', response_model=CrimeLatest)
 async def latest_data():
     query = "SELECT (date_trunc('month', crime_last_update::date) + interval '1 month' - interval '1 day')::date AS latest FROM update;"
     return await database.fetch_one(query=query)
 
 # Get Point Level Coordinates
-@app.get('/crime/', response_model=List[CrimePoints])
+@app.get('/crime/coords', response_model=List[CrimePoints])
 async def crime_points(start: date, end: date, category: str):
     query = "SELECT id, lon, lat FROM crime WHERE count = true AND date >= :start AND date <= :end AND LOWER(category) = LOWER(:category);"
     values = {'start': start, 'end': end, 'category': category}
