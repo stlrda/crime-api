@@ -20,7 +20,7 @@ jobs:
     - name: Publish API to Github Packages
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: stlrda/crime-api/api
+        name: stlrda/crime-api/crime-api
         username: ${{ github.actor }}
         password: ${{ secrets.TOKEN }}
         registry: docker.pkg.github.com
