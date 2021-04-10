@@ -192,8 +192,8 @@ def api_docs(openapi_prefix: str):
     openapi_schema = get_openapi(
         title='St. Louis Crime',
         version='0.1.0',
-        description='Automatically Updated, Clean Crime Data from the Saint Louis Metropolitan Police Department, provided by the St. Louis Regional Data Alliance in partnership with the Insititute for Public Health at Washington University.<br><br>If you\'d prefer to interact with queries in browser, see the <a href=\'/crime/docs\'>Swagger UI</a>',
-        routes=app.routes,#[13:], # Need to Verify this to Obfuscate Some Routes from Docs
+        description='Automatically Updated, Clean Crime Data from the Saint Louis Metropolitan Police Department, provided by the St. Louis Regional Data Alliance in partnership with the Insititute for Public Health at Washington University.<br><br>If you\'d prefer to interact with queries in browser, see the <a href=\'https://api.stldata.org/crime/docs\'>Swagger UI</a>',
+        routes=app.routes[10:], # Need to Verify this to Obfuscate Some Routes from Docs
         openapi_prefix=openapi_prefix
     )
     openapi_schema['info']['x-logo'] = {
