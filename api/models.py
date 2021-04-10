@@ -29,6 +29,8 @@ crime = sqlalchemy.Table(
 
 # Function to Truncate Coordinate Precision
 def trunc_coord(coord: float) -> float:
+    if coord == None:
+        return None
     return round(coord, 5)
 
 # Define Crime ORM Models
