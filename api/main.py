@@ -144,6 +144,32 @@ async def latest_data():
 # Get Point Level Coordinates
 @app.get('/crime/coords', response_model=List[CrimePoints])
 async def crime_points(start: date, end: date, category: str):
+    """
+    Valid categories are:
+    - Homicide
+    - Aggravated Assault
+    - Rape
+    - Robbery
+    - Simple Assault
+    - Burglary
+    - Larceny
+    - Loitering/Begging
+    - Arson
+    - Sex Offense
+    - Offense Against Family
+    - DWI/DUI
+    - Forgery
+    - Fraud
+    - Disorderly Conduct
+    - Embezzlement
+    - Stolen Property
+    - Weapons Offense
+    - Vehicle Theft
+    - Destruction of Property
+    - Liquor Laws
+    - VMCSL
+    - Other
+    """
     query = "SELECT id, lon, lat FROM crime WHERE count = true AND date >= :start AND date <= :end AND LOWER(category) = LOWER(:category);"
     values = {'start': start, 'end': end, 'category': category}
     return await database.fetch_all(query=query, values=values)
@@ -157,6 +183,10 @@ async def crime_detailed(start: date, end: date, category: str):
 # Get Geometric Aggregations
 @app.get('/crime/{geometry}', response_model=List[CrimeAggregate])
 async def crime_aggregate(start: date, end: date, geometry: str, category: str):
+    """
+    This endpoint returns the count (number of incidents) within a time period and aggregate geography for a given category. Valid categories are the same as for the /coords endpoint.
+    Currently, valid aggregations are one of "neighborhood" or "district"
+    """
     geometry = geometry.lower()
     category = category.lower()
     if geometry == 'neighborhood':
