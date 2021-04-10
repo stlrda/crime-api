@@ -3,7 +3,7 @@
 import sqlalchemy
 import datetime as dt
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 # Define Crime Table
 metadata = sqlalchemy.MetaData()
@@ -26,6 +26,10 @@ crime = sqlalchemy.Table(
     sqlalchemy.Column("lon", sqlalchemy.Float),
     sqlalchemy.Column("lat", sqlalchemy.Float)
 )
+
+# Function to Truncate Coordinate Precision
+def trunc_coord(coord: float) -> float:
+    return round(coord, 5)
 
 # Define Crime ORM Models
 class LegacyCrimeLatest(BaseModel):
@@ -54,6 +58,8 @@ class CrimePoints(BaseModel):
     id: int
     lon: Optional[float]
     lat: Optional[float]
+    _trunc_lon = validator('lon', allow_reuse=True)(trunc_coord)
+    _trunc_lat = validator('lat', allow_reuse=True)(trunc_coord)
 
 class CrimeDetailed(BaseModel):
     id: int
@@ -62,6 +68,8 @@ class CrimeDetailed(BaseModel):
     description: Optional[str]
     lon: Optional[float]
     lat: Optional[float]
+    _trunc_lon = validator('lon', allow_reuse=True)(trunc_coord)
+    _trunc_lat = validator('lat', allow_reuse=True)(trunc_coord)
 
 class CrimeAggregate(BaseModel):
     region: int
