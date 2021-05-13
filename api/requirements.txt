@@ -9,7 +9,7 @@ isort==4.3.21
 lazy-object-proxy==1.4.3
 mccabe==0.6.1
 psycopg2-binary==2.8.5
-pydantic==1.5.1
+pydantic==1.6.2
 six==1.15.0
 SQLAlchemy==1.3.18
 starlette==0.13.4
